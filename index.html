@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Upgrade calculator · TripleTen ops</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23FFD6C5'/%3E%3Ctext x='16' y='22' font-family='Arial' font-size='16' text-anchor='middle' fill='%231A1A1A'%3E%24%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --white:#FFFFFF; --cream:#F2F1EE; --stone:#E3E1DE; --ink:#1A1A1A;
+  --muted:rgba(0,0,0,.55); --faint:rgba(0,0,0,.38); --hair:rgba(0,0,0,.12);
+  --peach:#FFD6C5; --peach-deep:#FF976B;
+  --green:#2E8B50; --green-pale:#DDF3E4; --red:#C2453E; --red-pale:#FFDCD9;
+  --r-card:24px; --r-tag:8px; --r-ctl:12px;
+  --font:'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--white);color:var(--ink);font:16px/1.45 var(--font);
+  padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+.wrap{max-width:1360px;margin:0 auto;padding:28px 28px 64px}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:28px}
+.brand{display:flex;align-items:center;gap:16px}
+.brand svg{height:22px;width:auto}
+h1{font-weight:400;font-size:clamp(28px,3.4vw,40px);line-height:1.05;letter-spacing:-.02em;margin:10px 0 0}
+.sub{color:var(--muted);font-size:14px;margin:6px 0 0;max-width:62ch}
+
+.layout{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:28px;align-items:start}
+@media (max-width:980px){.layout{grid-template-columns:1fr}}
+
+/* ---------- student panel ---------- */
+.panel{background:var(--cream);border-radius:var(--r-card);padding:24px}
+.panel h2,.quote h2{font-weight:500;font-size:20px;margin:0 0 18px;letter-spacing:-.01em}
+.field{margin:0 0 18px;border:0;padding:0;min-width:0}
+.field>legend,.field>label{display:block;font-size:13px;color:var(--muted);margin:0 0 7px;padding:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:var(--r-ctl);background:var(--white);
+  cursor:pointer;font-size:14px;line-height:1.2;user-select:none;transition:background .12s}
+.seg label small{color:var(--faint);font-size:12px}
+.seg label:hover{background:var(--stone)}
+.seg input:checked+label{background:var(--ink);color:var(--white)}
+.seg input:checked+label small{color:rgba(255,255,255,.65)}
+.seg input:focus-visible+label{outline:2px solid var(--ink);outline-offset:2px}
+.seg input:disabled+label{opacity:.35;cursor:not-allowed;background:transparent}
+.seg.fill label{flex:1;justify-content:center}
+select,.money{width:100%;padding:10px 12px;border-radius:var(--r-ctl);border:0;background:var(--white);font-size:15px}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+.hint{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.hint.warn{color:var(--red)}
+.now{background:var(--white);border-radius:16px;padding:14px 16px;margin-top:6px}
+.now .k{font-size:13px;color:var(--muted)}
+.now .v{font-size:22px;letter-spacing:-.01em;margin-top:2px}
+.now .d{font-size:13px;color:var(--muted);margin-top:2px}
+
+.levels{margin-top:22px}
+.levels h3{font-weight:500;font-size:14px;margin:0 0 8px}
+.levels .tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 6px;text-align:right;white-space:nowrap}
+th{font-weight:500;color:var(--muted)}
+th:first-child,td:first-child{text-align:left}
+td .p{color:var(--faint);margin-left:4px}
+td.cur{background:var(--peach);border-radius:6px}
+td.na{color:var(--faint)}
+
+/* ---------- quote ---------- */
+.quote-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.quote-head h2{margin:0}
+.cur-tag{font-size:13px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:1200px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:680px){.cards{grid-template-columns:1fr}}
+.card{background:var(--cream);border-radius:var(--r-card);padding:22px;display:flex;flex-direction:column;min-height:100%}
+.card.first{background:var(--peach)}
+.card.empty{background:transparent;outline:1.5px dashed var(--stone);outline-offset:-1.5px;color:var(--faint);justify-content:center;align-items:center;text-align:center;min-height:220px}
+.rank{display:inline-flex;align-self:flex-start;gap:8px;align-items:center;font-size:13px;padding:5px 10px;border-radius:var(--r-tag);background:var(--white)}
+.rank b{font-weight:600}
+.card h3{font-weight:400;font-size:26px;line-height:1.1;letter-spacing:-.02em;margin:14px 0 4px}
+.card h3 .mode{display:block;font-size:17px;letter-spacing:-.01em;margin-top:4px}
+.lvl{font-size:13px;color:var(--muted)}
+.short{font-size:14.5px;margin:12px 0 0;max-width:46ch}
+.short .split{display:block;margin-top:6px;color:var(--ink);font-weight:500}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.tag{font-size:12.5px;padding:4px 9px;border-radius:var(--r-tag);background:var(--red-pale);color:#8A2B25}
+.pay{margin-top:20px;padding-top:16px;border-top:1px solid var(--hair)}
+.pay .k{font-size:13px;color:var(--muted)}
+.pay .big{font-size:44px;line-height:1;letter-spacing:-.03em;margin:6px 0 8px;font-variant-numeric:tabular-nums}
+.then{font-size:15px}
+.then b{font-weight:600}
+.cmp{font-size:13px;color:var(--muted);margin-top:4px}
+.tot{margin-top:18px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14px;font-variant-numeric:tabular-nums}
+.tot .r{text-align:right}
+.tot .was{color:var(--faint);text-decoration:line-through}
+.tot .save{color:var(--green);font-weight:600}
+.copy{margin-top:auto;padding-top:18px}
+.copy button{width:100%;border:0;border-radius:var(--r-ctl);padding:11px 14px;background:var(--ink);color:var(--white);cursor:pointer;font-weight:500}
+.card.first .copy button{background:var(--ink)}
+.copy button:hover{background:#000}
+.none{background:var(--cream);border-radius:var(--r-card);padding:28px}
+.none h3{font-weight:400;font-size:26px;margin:0 0 6px;letter-spacing:-.02em}
+.none p{margin:0;color:var(--muted)}
+.foot{margin-top:28px;font-size:12.5px;color:var(--faint);max-width:80ch}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;
+  background:var(--ink);color:var(--white);padding:10px 16px;border-radius:12px;font-size:14px;transition:all .18s;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><svg role="img" aria-label="TripleTen" width="362" height="80" viewBox="0 0 362 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M61.6589 30.3961C54.6369 30.3961 50.9036 32.9724 50.9036 40.4389V64.4343H36.2384V16.6201H50.3679V25.6882C52.5907 20.0912 56.5919 16.5346 63.4315 16.2667C64.1439 16.2667 64.9419 16.2667 65.6543 16.3522V30.664C64.0527 30.4873 62.9869 30.3961 61.6532 30.3961" fill="#1A1A1A"></path>
+<path d="M71.4338 64.44H86.1902V16.6201H71.4338V64.44ZM71.4338 11.7355H86.099V0H71.4338V11.7355Z" fill="#1A1A1A"></path>
+<path d="M117.584 54.2149C123.449 54.2149 128.248 49.4158 128.248 40.5301C128.248 31.6443 123.449 26.9307 117.584 26.9307C111.719 26.9307 107.005 30.664 107.005 40.5301C107.005 50.3961 111.804 54.2149 117.584 54.2149ZM122.383 15.5543C134.649 15.5543 143.449 24.8846 143.449 40.5301C143.449 56.1755 134.649 65.597 122.383 65.597C117.139 65.597 110.83 63.283 107.718 58.045V80H93.0526V16.6201H107.718V23.1063C110.83 17.8626 117.139 15.5543 122.383 15.5543Z" fill="#1A1A1A"></path>
+<path d="M162.645 0H147.98V64.44H162.645V0Z" fill="#1A1A1A"></path>
+<path d="M202.389 35.3719C202.212 29.4158 197.858 26.395 192.346 26.395C187.194 26.395 182.48 29.0624 181.682 35.3719H202.389ZM192.968 65.5913C177.413 65.5913 166.749 56.0787 166.749 40.2622C166.749 24.4457 178.393 15.2009 192.346 15.2009C208.168 15.2009 217.943 27.2898 216.969 44.2633H181.506C181.95 51.0174 187.194 54.2206 192.529 54.2206C197.864 54.2206 201.591 52.2656 203.284 49.4215H216.792C212.529 60.7067 202.571 65.597 192.973 65.597" fill="#1A1A1A"></path>
+<path d="M290.671 35.3719C290.494 29.4158 286.14 26.395 280.628 26.395C275.476 26.395 270.762 29.0624 269.964 35.3719H290.671ZM281.249 65.5913C265.695 65.5913 255.031 56.0787 255.031 40.2622C255.031 24.4457 266.675 15.2009 280.628 15.2009C296.45 15.2009 306.225 27.2898 305.245 44.2633H269.782C270.226 51.0174 275.47 54.2206 280.805 54.2206C286.14 54.2206 289.867 52.2656 291.56 49.4215H305.068C300.799 60.7067 290.848 65.597 281.249 65.597" fill="#1A1A1A"></path>
+<path d="M340.002 15.5543C352.267 15.5543 356.086 22.7529 356.086 35.731V64.44H341.421V39.3787C341.421 32.5335 341.153 26.9364 334.045 26.9364C327.827 26.9364 325.16 31.1143 325.16 39.9145V64.4457H310.494V16.6201H325.16V22.9296C327.291 19.373 332.535 15.5543 340.002 15.5543Z" fill="#1A1A1A"></path>
+<path d="M236.895 52.1402L236.878 27.0162H251.48V16.6201H236.878V3.55657H222.212V38.1362C222.212 44.1208 222.634 52.1402 234.113 52.1402C234.113 54.2206 236.45 65.3861 253.139 64.3716V52.1402H236.895Z" fill="#1A1A1A"></path>
+<path d="M14.6823 52.1402L14.6652 27.0162H29.2677V16.6201H14.6652V3.55657H0V38.1362C0 44.1208 0.421775 52.1402 11.9009 52.1402C11.9009 54.2206 14.2377 65.3861 30.9263 64.3716V52.1402H14.6823Z" fill="#1A1A1A"></path>
+</svg></div>
+      <h1>Upgrade calculator</h1>
+      <p class="sub">Pick the student's situation. Quote offer 1 first, move to 2 only if the student says no, then 3.</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="panel" aria-labelledby="student-h">
+      <h2 id="student-h">The student</h2>
+
+      <fieldset class="field"><legend>Country</legend><div class="seg" id="country"></div></fieldset>
+      <fieldset class="field"><legend>Bought on</legend><div class="seg fill" id="list"></div></fieldset>
+      <div class="field"><label for="course">Course</label><select id="course"></select></div>
+      <fieldset class="field"><legend>Current plan</legend><div class="seg fill" id="plan"></div>
+        <p class="hint" id="plan-hint" hidden></p></fieldset>
+      <fieldset class="field"><legend>Current discount level</legend><div class="seg fill" id="level"></div></fieldset>
+      <fieldset class="field"><legend>Payments already made</legend><div class="seg fill" id="pm"></div></fieldset>
+      <div class="field"><label for="paid">Total already paid</label>
+        <input class="money" id="paid" inputmode="decimal" autocomplete="off">
+        <p class="hint" id="paid-hint"></p></div>
+
+      <div class="now" id="now"></div>
+
+      <div class="levels">
+        <h3>Discount levels for this course</h3>
+        <div class="tbl"><table id="levels"></table></div>
+      </div>
+    </section>
+
+    <section class="quote" aria-labelledby="quote-h" aria-live="polite">
+      <div class="quote-head"><h2 id="quote-h">What to quote</h2><span class="cur-tag" id="cur-tag"></span></div>
+      <div id="out"></div>
+      <p class="foot" id="foot"></p>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<!-- ============================================================
+     DATA — prices, offer ladder and the per-country priority matrix.
+     Generated from the "Upgrade calculator" Google Sheet (Price book + Matrix tabs).
+     Matrix cell values: 1 / 2 / 3 = offer in this order, "YES" = allowed backup, "NO" = do not offer.
+     ============================================================ -->
+<script id="data" type="application/json">{"depositShare":0.292,"cap":3,"offers":[{"id":1,"name":"Upfront · same level","target":"Upfront","stepText":"Same level","step":0,"parts":1,"approval":"No","applies":"Any segment"},{"id":2,"name":"Upfront · same level · 2 parts","target":"Upfront","stepText":"Same level","step":0,"parts":2,"approval":"No","applies":"Any segment"},{"id":3,"name":"Monthly · same level","target":"Monthly","stepText":"Same level","step":0,"parts":1,"approval":"No","applies":"Any segment"},{"id":4,"name":"Deposit · same level","target":"Deposit","stepText":"Same level","step":0,"parts":1,"approval":"No","applies":"Not for Monthly"},{"id":5,"name":"Upfront · 1 step more discount","target":"Upfront","stepText":"1 step more discount","step":1,"parts":1,"approval":"Yes","applies":"Any segment"},{"id":6,"name":"Upfront · 1 step more discount · 3 parts","target":"Upfront","stepText":"1 step more discount","step":1,"parts":3,"approval":"Yes","applies":"Any segment"},{"id":7,"name":"Deposit · 1 step more discount","target":"Deposit","stepText":"1 step more discount","step":1,"parts":1,"approval":"Yes","applies":"Not for Monthly"},{"id":8,"name":"Upfront · 2 steps more discount","target":"Upfront","stepText":"2 steps more discount","step":2,"parts":1,"approval":"Yes","applies":"Any segment"},{"id":9,"name":"Upfront · 2 steps more discount · 3 parts","target":"Upfront","stepText":"2 steps more discount","step":2,"parts":3,"approval":"Yes","applies":"Any segment"},{"id":10,"name":"Deposit · 2 steps more discount","target":"Deposit","stepText":"2 steps more discount","step":2,"parts":1,"approval":"Yes","applies":"Not for Monthly"},{"id":11,"name":"Upfront · 1 step less discount","target":"Upfront","stepText":"1 step less discount","step":-1,"parts":1,"approval":"No","applies":"Extended only"},{"id":12,"name":"Monthly · 1 step less discount","target":"Monthly","stepText":"1 step less discount","step":-1,"parts":1,"approval":"No","applies":"Extended only"},{"id":13,"name":"Deposit · 1 step less discount","target":"Deposit","stepText":"1 step less discount","step":-1,"parts":1,"approval":"No","applies":"Extended only"}],"matrix":{"Mexico":{"Monthly":{"Upfront · same level":{"1-1":1,"1-2":1,"1-3":1,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · same level · 2 parts":{"1-1":2,"1-2":2,"1-3":2,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount":{"1-1":3,"1-2":3,"1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount · 3 parts":{"1-1":"YES","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount · 3 parts":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"}},"Extended":{"Upfront · same level":{"1-1":"YES","1-2":"YES","1-3":1,"2-1":"YES","2-2":1,"2-3":1,"3-1":1,"3-2":"NO","3-3":"NO"},"Upfront · same level · 2 parts":{"1-1":"YES","1-2":"YES","1-3":"YES","2-1":"YES","2-2":"YES","2-3":"YES","3-1":"NO","3-2":"NO","3-3":"NO"},"Monthly · same level":{"1-1":3,"1-2":3,"1-3":3,"2-1":3,"2-2":3,"2-3":3,"3-1":3,"3-2":3,"3-3":3},"Deposit · same level":{"1-1":2,"1-2":2,"1-3":2,"2-1":2,"2-2":2,"2-3":2,"3-1":2,"3-2":2,"3-3":"NO"},"Upfront · 1 step more discount":{"1-1":1,"1-2":1,"1-3":"NO","2-1":1,"2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount · 3 parts":{"1-1":"YES","1-2":"YES","1-3":"NO","2-1":"YES","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Deposit · 1 step more discount":{"1-1":"YES","1-2":"YES","1-3":"NO","2-1":"YES","2-2":"YES","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount":{"1-1":"YES","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount · 3 parts":{"1-1":"YES","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Deposit · 2 steps more discount":{"1-1":"YES","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step less discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":1,"3-3":1},"Monthly · 1 step less discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Deposit · 1 step less discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":2}},"Deposit":{"Upfront · same level":{"1-1":1,"1-2":1,"1-3":1,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · same level · 2 parts":{"1-1":2,"1-2":2,"1-3":2,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount · 3 parts":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Deposit · 1 step more discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount · 3 parts":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Deposit · 2 steps more discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"}}},"Chile":{"Monthly":{"Upfront · same level":{"1-1":1,"1-2":1,"1-3":1,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · same level · 2 parts":{"1-1":2,"1-2":2,"1-3":2,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount":{"1-1":3,"1-2":3,"1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount · 3 parts":{"1-1":"YES","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount · 3 parts":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"}}},"Ecuador":{"Monthly":{"Upfront · same level":{"1-1":1,"1-2":1,"1-3":1,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · same level · 2 parts":{"1-1":2,"1-2":2,"1-3":2,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount":{"1-1":3,"1-2":3,"1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount · 3 parts":{"1-1":"YES","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount · 3 parts":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"}}},"Peru":{"Monthly":{"Upfront · same level":{"1-1":1,"1-2":1,"1-3":1,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · same level · 2 parts":{"1-1":2,"1-2":2,"1-3":2,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount":{"1-1":3,"1-2":3,"1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount · 3 parts":{"1-1":"YES","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount · 3 parts":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"}}},"Colombia":{"Monthly":{"Upfront · same level":{"1-1":1,"1-2":1,"1-3":1,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · same level · 2 parts":{"1-1":2,"1-2":2,"1-3":2,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount":{"1-1":3,"1-2":3,"1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount · 3 parts":{"1-1":"YES","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount · 3 parts":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"}}},"Argentina":{"Monthly":{"Upfront · same level":{"1-1":1,"1-2":1,"1-3":1,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · same level · 2 parts":{"1-1":2,"1-2":2,"1-3":2,"2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount":{"1-1":3,"1-2":3,"1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 1 step more discount · 3 parts":{"1-1":"YES","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"},"Upfront · 2 steps more discount · 3 parts":{"1-1":"NO","1-2":"NO","1-3":"NO","2-1":"NO","2-2":"NO","2-3":"NO","3-1":"NO","3-2":"NO","3-3":"NO"}}}},"prices":{"Mexico|Old|Web Developer":{"cur":"MXN","full":103999,"up1":62399,"up2":51999,"up3":41599,"mon_n":8,"mon1":74872,"mon2":62392,"mon3":49912,"ext_n":18,"ext1":100872,"ext2":88398,"ext3":76968,"dep_n":12,"dep_full":103990,"dep1":70711,"dep2":59274,"dep3":47838},"Mexico|Old|Data Analyst":{"cur":"MXN","full":82999,"up1":49799,"up2":41499,"up3":33199,"mon_n":6,"mon1":59754,"mon2":49794,"mon3":39834,"ext_n":18,"ext1":80514,"ext2":70542,"ext3":61416,"dep_n":9,"dep_full":82995,"dep1":56432,"dep2":47302,"dep3":38172},"Mexico|Old|Data Science":{"cur":"MXN","full":103999,"up1":62399,"up2":51999,"up3":41599,"mon_n":9,"mon1":74871,"mon2":62397,"mon3":49914,"ext_n":18,"ext1":100872,"ext2":88398,"ext3":76968,"dep_n":12,"dep_full":103990,"dep1":70711,"dep2":59274,"dep3":47838},"Mexico|Old|QA":{"cur":"MXN","full":57999,"up1":34799,"up2":28999,"up3":23199,"mon_n":5,"mon1":41755,"mon2":34795,"mon3":27835,"ext_n":12,"ext1":56256,"ext2":49296,"ext3":42924,"dep_n":8,"dep_full":57997,"dep1":39439,"dep2":33054,"dep3":26676},"Mexico|Old|UX/UI Designer":{"cur":"MXN","full":82999,"up1":49799,"up2":41499,"up3":33199,"mon_n":7,"mon1":59759,"mon2":49798,"mon3":39837,"ext_n":18,"ext1":80514,"ext2":70542,"ext3":61416,"dep_n":12,"dep_full":82997,"dep1":56432,"dep2":47309,"dep3":38175},"Mexico|Old|Cyber Security":{"cur":"MXN","full":103999,"up1":62399,"up2":51999,"up3":41599,"mon_n":7,"mon1":74879,"mon2":62398,"mon3":49917,"ext_n":18,"ext1":100872,"ext2":88398,"ext3":76968,"dep_n":12,"dep_full":103990,"dep1":70711,"dep2":59274,"dep3":47838},"Mexico|New|Web Developer":{"cur":"MXN","full":108999,"up1":65399,"up2":54499,"up3":43599,"mon_n":8,"mon1":78472,"mon2":65392,"mon3":52312,"ext_n":18,"ext1":105732,"ext2":92646,"ext3":80658,"dep_n":12,"dep_full":108992,"dep1":74112,"dep2":62119,"dep3":50137},"Mexico|New|Data Analyst":{"cur":"MXN","full":86999,"up1":52199,"up2":43499,"up3":34799,"mon_n":6,"mon1":62634,"mon2":52194,"mon3":41754,"ext_n":18,"ext1":84384,"ext2":73944,"ext3":64386,"dep_n":9,"dep_full":86995,"dep1":59154,"dep2":49584,"dep3":40013},"Mexico|New|Data Science":{"cur":"MXN","full":109999,"up1":65999,"up2":54999,"up3":43999,"mon_n":9,"mon1":79191,"mon2":65997,"mon3":52794,"ext_n":18,"ext1":106704,"ext2":93492,"ext3":81396,"dep_n":12,"dep_full":109988,"dep1":74795,"dep2":62693,"dep3":50591},"Mexico|New|QA":{"cur":"MXN","full":60999,"up1":36599,"up2":30499,"up3":24399,"mon_n":5,"mon1":43915,"mon2":36595,"mon3":29275,"ext_n":12,"ext1":59172,"ext2":51840,"ext3":45144,"dep_n":8,"dep_full":60994,"dep1":41476,"dep2":34764,"dep3":28059},"Mexico|New|UX/UI Designer":{"cur":"MXN","full":87999,"up1":52799,"up2":43999,"up3":35199,"mon_n":7,"mon1":63357,"mon2":52794,"mon3":42238,"ext_n":18,"ext1":85356,"ext2":74790,"ext3":65124,"dep_n":12,"dep_full":87988,"dep1":59834,"dep2":50154,"dep3":40475},"Mexico|New|Cyber Security":{"cur":"MXN","full":109499,"up1":65699,"up2":54749,"up3":43799,"mon_n":7,"mon1":78834,"mon2":65695,"mon3":52556,"ext_n":18,"ext1":106218,"ext2":93060,"ext3":81036,"dep_n":12,"dep_full":109490,"dep1":74454,"dep2":62412,"dep3":50358},"Chile|Old|Web Developer":{"cur":"CLP","full":5399999,"up1":3239999,"up2":2699999,"up3":2159999,"mon_n":8,"mon1":3887992,"mon2":3239992,"mon3":2591992},"Chile|Old|Data Analyst":{"cur":"CLP","full":4199999,"up1":2519999,"up2":2099999,"up3":1679999,"mon_n":6,"mon1":3023994,"mon2":2519994,"mon3":2015994},"Chile|Old|Data Science":{"cur":"CLP","full":5399999,"up1":3239999,"up2":2699999,"up3":2159999,"mon_n":9,"mon1":3887991,"mon2":3239991,"mon3":2591991},"Chile|Old|QA":{"cur":"CLP","full":2959999,"up1":1775999,"up2":1479999,"up3":1183999,"mon_n":5,"mon1":2131195,"mon2":1775995,"mon3":1420795},"Chile|Old|UX/UI Designer":{"cur":"CLP","full":4299999,"up1":2579999,"up2":2149999,"up3":1719999,"mon_n":7,"mon1":3095995,"mon2":2579997,"mon3":2063992},"Chile|Old|Cyber Security":{"cur":"CLP","full":5399999,"up1":3239999,"up2":2699999,"up3":2159999,"mon_n":7,"mon1":3887996,"mon2":3239992,"mon3":2591995},"Chile|New|Web Developer":{"cur":"CLP","full":5649999,"up1":3389999,"up2":2824999,"up3":2259999,"mon_n":8,"mon1":4067992,"mon2":3389992,"mon3":2711992},"Chile|New|Data Analyst":{"cur":"CLP","full":4399999,"up1":2639999,"up2":2199999,"up3":1759999,"mon_n":6,"mon1":3167994,"mon2":2639994,"mon3":2111994},"Chile|New|Data Science":{"cur":"CLP","full":5699999,"up1":3419999,"up2":2849999,"up3":2279999,"mon_n":9,"mon1":4103991,"mon2":3419991,"mon3":2735991},"Chile|New|QA":{"cur":"CLP","full":3109999,"up1":1865999,"up2":1554999,"up3":1243999,"mon_n":5,"mon1":2239195,"mon2":1865995,"mon3":1492795},"Chile|New|UX/UI Designer":{"cur":"CLP","full":4519999,"up1":2711999,"up2":2259999,"up3":1807999,"mon_n":7,"mon1":3254398,"mon2":2711996,"mon3":2169594},"Chile|New|Cyber Security":{"cur":"CLP","full":5669999,"up1":3401999,"up2":2834999,"up3":2267999,"mon_n":7,"mon1":4082393,"mon2":3401993,"mon3":2721593},"Ecuador|Old|Web Developer":{"cur":"USD","full":5139,"up1":3083,"up2":2569,"up3":2055,"mon_n":8,"mon1":3696,"mon2":3080,"mon3":2464},"Ecuador|Old|Data Analyst":{"cur":"USD","full":3999,"up1":2399,"up2":1999,"up3":1599,"mon_n":6,"mon1":2874,"mon2":2394,"mon3":1914},"Ecuador|Old|Data Science":{"cur":"USD","full":5079,"up1":3047,"up2":2539,"up3":2031,"mon_n":9,"mon1":3654,"mon2":3042,"mon3":2430},"Ecuador|Old|QA":{"cur":"USD","full":2799,"up1":1679,"up2":1399,"up3":1119,"mon_n":5,"mon1":2010,"mon2":1675,"mon3":1340},"Ecuador|Old|UX/UI Designer":{"cur":"USD","full":3959,"up1":2375,"up2":1979,"up3":1583,"mon_n":7,"mon1":2842,"mon2":2373,"mon3":1897},"Ecuador|Old|Cyber Security":{"cur":"USD","full":5139,"up1":3083,"up2":2569,"up3":2055,"mon_n":7,"mon1":3696,"mon2":3080,"mon3":2464},"Ecuador|New|Web Developer":{"cur":"USD","full":6399,"up1":3839,"up2":3199,"up3":2559,"mon_n":8,"mon1":4600,"mon2":3832,"mon3":3064},"Ecuador|New|Data Analyst":{"cur":"USD","full":4999,"up1":2999,"up2":2499,"up3":1999,"mon_n":6,"mon1":3594,"mon2":2994,"mon3":2394},"Ecuador|New|Data Science":{"cur":"USD","full":6499,"up1":3899,"up2":3249,"up3":2599,"mon_n":9,"mon1":4671,"mon2":3897,"mon3":3114},"Ecuador|New|QA":{"cur":"USD","full":3399,"up1":2039,"up2":1699,"up3":1359,"mon_n":5,"mon1":2440,"mon2":2035,"mon3":1625},"Ecuador|New|UX/UI Designer":{"cur":"USD","full":5049,"up1":3029,"up2":2524,"up3":2019,"mon_n":7,"mon1":3633,"mon2":3024,"mon3":2422},"Ecuador|New|Cyber Security":{"cur":"USD","full":6449,"up1":3869,"up2":3224,"up3":2579,"mon_n":7,"mon1":4641,"mon2":3864,"mon3":3094},"Peru|Old|Web Developer":{"cur":"USD","full":5139,"up1":3083,"up2":2569,"up3":2055,"mon_n":8,"mon1":3696,"mon2":3080,"mon3":2464},"Peru|Old|Data Analyst":{"cur":"USD","full":3999,"up1":2399,"up2":1999,"up3":1599,"mon_n":6,"mon1":2874,"mon2":2394,"mon3":1914},"Peru|Old|Data Science":{"cur":"USD","full":5079,"up1":3047,"up2":2539,"up3":2031,"mon_n":9,"mon1":3654,"mon2":3042,"mon3":2430},"Peru|Old|QA":{"cur":"USD","full":2799,"up1":1679,"up2":1399,"up3":1119,"mon_n":5,"mon1":2010,"mon2":1675,"mon3":1340},"Peru|Old|UX/UI Designer":{"cur":"USD","full":3959,"up1":2375,"up2":1979,"up3":1583,"mon_n":7,"mon1":2842,"mon2":2373,"mon3":1897},"Peru|Old|Cyber Security":{"cur":"USD","full":5139,"up1":3083,"up2":2569,"up3":2055,"mon_n":7,"mon1":3696,"mon2":3080,"mon3":2464},"Peru|New|Web Developer":{"cur":"USD","full":6399,"up1":3839,"up2":3199,"up3":2559,"mon_n":8,"mon1":4600,"mon2":3832,"mon3":3064},"Peru|New|Data Analyst":{"cur":"USD","full":4999,"up1":2999,"up2":2499,"up3":1999,"mon_n":6,"mon1":3594,"mon2":2994,"mon3":2394},"Peru|New|Data Science":{"cur":"USD","full":6499,"up1":3899,"up2":3249,"up3":2599,"mon_n":9,"mon1":4671,"mon2":3897,"mon3":3114},"Peru|New|QA":{"cur":"USD","full":3399,"up1":2039,"up2":1699,"up3":1359,"mon_n":5,"mon1":2440,"mon2":2035,"mon3":1625},"Peru|New|UX/UI Designer":{"cur":"USD","full":5049,"up1":3029,"up2":2524,"up3":2019,"mon_n":7,"mon1":3633,"mon2":3024,"mon3":2422},"Peru|New|Cyber Security":{"cur":"USD","full":6449,"up1":3869,"up2":3224,"up3":2579,"mon_n":7,"mon1":4641,"mon2":3864,"mon3":3094},"Colombia|Old|Web Developer":{"cur":"COP","full":20599999,"up1":12359999,"up2":10299999,"up3":8239999,"mon_n":8,"mon1":14831992,"mon2":12359992,"mon3":9887992},"Colombia|Old|Data Analyst":{"cur":"COP","full":15999999,"up1":9599999,"up2":7999999,"up3":6399999,"mon_n":6,"mon1":11519994,"mon2":9599994,"mon3":7679994},"Colombia|Old|Data Science":{"cur":"COP","full":20599999,"up1":12359999,"up2":10299999,"up3":8239999,"mon_n":9,"mon1":14831991,"mon2":12359988,"mon3":9887994},"Colombia|Old|QA":{"cur":"COP","full":10099999,"up1":6059999,"up2":5049999,"up3":4039999,"mon_n":5,"mon1":7271995,"mon2":6059995,"mon3":4847995},"Colombia|Old|UX/UI Designer":{"cur":"COP","full":16259999,"up1":9755999,"up2":8129999,"up3":6503999,"mon_n":7,"mon1":11707199,"mon2":9755998,"mon3":7804797},"Colombia|Old|Cyber Security":{"cur":"COP","full":20599999,"up1":12359999,"up2":10299999,"up3":8239999,"mon_n":7,"mon1":14831999,"mon2":12359998,"mon3":9887997},"Colombia|New|Web Developer":{"cur":"COP","full":21599999,"up1":12959999,"up2":10799999,"up3":8639999,"mon_n":8,"mon1":15551992,"mon2":12959992,"mon3":10367992},"Colombia|New|Data Analyst":{"cur":"COP","full":16799999,"up1":10079999,"up2":8399999,"up3":6719999,"mon_n":6,"mon1":12095994,"mon2":10079994,"mon3":8063994},"Colombia|New|Data Science":{"cur":"COP","full":21699999,"up1":13019999,"up2":10849999,"up3":8679999,"mon_n":9,"mon1":15623991,"mon2":13019994,"mon3":10415997},"Colombia|New|QA":{"cur":"COP","full":10599999,"up1":6359999,"up2":5299999,"up3":4239999,"mon_n":5,"mon1":7631995,"mon2":6359995,"mon3":5087995},"Colombia|New|UX/UI Designer":{"cur":"COP","full":17099999,"up1":10259999,"up2":8549999,"up3":6839999,"mon_n":7,"mon1":12311999,"mon2":10259998,"mon3":8207997},"Colombia|New|Cyber Security":{"cur":"COP","full":21649999,"up1":12989999,"up2":10824999,"up3":8659999,"mon_n":7,"mon1":15587999,"mon2":12989998,"mon3":10391997},"Argentina|Old|Web Developer":{"cur":"USD","full":5139,"up1":3083,"up2":2569,"up3":2055,"mon_n":8,"mon1":3696,"mon2":3080,"mon3":2464},"Argentina|Old|Data Analyst":{"cur":"USD","full":3999,"up1":2399,"up2":1999,"up3":1599,"mon_n":6,"mon1":2874,"mon2":2394,"mon3":1914},"Argentina|Old|Data Science":{"cur":"USD","full":5079,"up1":3047,"up2":2539,"up3":2031,"mon_n":9,"mon1":3654,"mon2":3042,"mon3":2430},"Argentina|Old|QA":{"cur":"USD","full":2799,"up1":1679,"up2":1399,"up3":1119,"mon_n":5,"mon1":2010,"mon2":1675,"mon3":1340},"Argentina|Old|UX/UI Designer":{"cur":"USD","full":3959,"up1":2375,"up2":1979,"up3":1583,"mon_n":7,"mon1":2842,"mon2":2373,"mon3":1897},"Argentina|Old|Cyber Security":{"cur":"USD","full":5139,"up1":3083,"up2":2569,"up3":2055,"mon_n":7,"mon1":3696,"mon2":3080,"mon3":2464},"Argentina|New|Web Developer":{"cur":"USD","full":6399,"up1":3839,"up2":3199,"up3":2559,"mon_n":8,"mon1":4600,"mon2":3832,"mon3":3064},"Argentina|New|Data Analyst":{"cur":"USD","full":4999,"up1":2999,"up2":2499,"up3":1999,"mon_n":6,"mon1":3594,"mon2":2994,"mon3":2394},"Argentina|New|Data Science":{"cur":"USD","full":6499,"up1":3899,"up2":3249,"up3":2599,"mon_n":9,"mon1":4671,"mon2":3897,"mon3":3114},"Argentina|New|QA":{"cur":"USD","full":3399,"up1":2039,"up2":1699,"up3":1359,"mon_n":5,"mon1":2440,"mon2":2035,"mon3":1625},"Argentina|New|UX/UI Designer":{"cur":"USD","full":5049,"up1":3029,"up2":2524,"up3":2019,"mon_n":7,"mon1":3633,"mon2":3024,"mon3":2422},"Argentina|New|Cyber Security":{"cur":"USD","full":6449,"up1":3869,"up2":3224,"up3":2579,"mon_n":7,"mon1":4641,"mon2":3864,"mon3":3094}},"countries":["Mexico","Chile","Ecuador","Peru","Colombia","Argentina"],"courses":["Web Developer","Data Analyst","Data Science","QA","UX/UI Designer","Cyber Security"]}</script>
+
+<script>
+/* ---------- pure calculation (kept free of DOM so it can be tested) ---------- */
+const CALC = (function(){
+  function planTable(p){
+    const t = {Upfront:{l:[p.full,p.up1,p.up2,p.up3], full:p.full, n:1},
+               Monthly:{l:[p.full,p.mon1,p.mon2,p.mon3], full:p.full, n:p.mon_n}};
+    if (p.ext1 != null) t.Extended = {l:[p.full,p.ext1,p.ext2,p.ext3], full:p.full, n:p.ext_n};
+    if (p.dep1 != null) t.Deposit  = {l:[p.dep_full,p.dep1,p.dep2,p.dep3], full:p.dep_full, n:p.dep_n};
+    return t;
+  }
+  const r0 = x => Math.round(x);
+  function pct(x){ return Math.round(x*100) + '%'; }
+
+  function quote(D, s){
+    // s = {country, list:'Old'|'New', course, plan, level, pm, paid (number|null)}
+    const p = D.prices[`${s.country}|${s.list}|${s.course}`];
+    if (!p) return {error:'No prices for this course'};
+    const T = planTable(p), DEP = D.depositShare, cap = D.cap;
+    const planOK = (s.country === 'Mexico' || s.plan === 'Monthly') && !!T[s.plan];
+    if (!planOK) return {error:`${s.country} has only Monthly plans`, planOK:false, T, p};
+    const curT = T[s.plan];
+    const cur = curT.l[s.level];
+    const curDisc = 1 - cur / curT.full;
+    const nDep = T.Deposit ? T.Deposit.n : 0, nMon = T.Monthly.n;
+    const inst = s.plan === 'Deposit' ? cur*(1-DEP)/(nDep-1) : cur / curT.n;
+    const paidAuto = r0(s.plan === 'Deposit' ? DEP*cur + inst*(s.pm-1) : inst*s.pm);
+    const paid = r0(s.paid == null ? paidAuto : s.paid);
+    const block = (D.matrix[s.country] || {})[s.plan] || {};
+
+    const rows = D.offers.map(o => {
+      const H = s.level + o.step;
+      const tT = T[o.target];
+      const exists = (s.country === 'Mexico' || o.target === 'Upfront' || o.target === 'Monthly') && !!tT &&
+        H >= 1 && H <= cap &&
+        (o.applies !== 'Extended only' || s.plan === 'Extended') &&
+        (o.applies !== 'Not for Monthly' || s.plan !== 'Monthly');
+      const J = Math.max(0, Math.min(3, H));
+      const K = tT ? tT.l[J] : 0;
+      const disc = tT ? 1 - K / tT.full : 0;
+      const same = o.target === s.plan && H === s.level;
+      const N = cur - K, O = N / cur;
+      const mv = (block[o.name] || {})[`${s.pm}-${s.level}`] ?? 'NO';
+      const Tt = K - paid;
+      const E = o.parts;
+      const U = o.target === 'Upfront' ? r0(Math.max(0,Tt)/E) : o.target === 'Deposit' ? r0(DEP*K) : 0;
+      const W = Math.max(0, Tt - U);
+      const X = W <= 0 ? 0 : o.target === 'Upfront' ? E - 1 :
+                o.target === 'Monthly' ? Math.max(1, nMon - s.pm) : Math.max(1, nDep - 1 - s.pm);
+      const V = X === 0 ? 0 : o.target === 'Upfront' ? r0(Math.max(0,Tt)/E) : r0(W / X);
+      const Y = X ? V : 0;
+      const Z = X ? r0(W - V*(X-1)) : 0;
+      const check = Tt >= U && r0(paid + U + W - K) === 0;
+      const isPrio = typeof mv === 'number';
+      const allowed = exists && !same && O >= 0.01 && (mv === 'YES' || isPrio) && check;
+      return {o, exists, same, K, disc, N, O, mv, U, X, Y, Z, check, allowed, prio: isPrio ? mv : 99, level: J};
+    });
+    const top = rows.filter(r => r.allowed && r.prio < 99).sort((a,b) => a.prio - b.prio || a.o.id - b.o.id).slice(0,3);
+    const shown = new Set(top.map(r => r.o.id));
+    const twin = {1:2, 5:6, 8:9};
+    top.forEach(r => {
+      const o = r.o;
+      r.title = o.target + (r.disc > 0 ? ' −' + pct(r.disc) : ' (list price)');
+      r.mode = o.target === 'Upfront' ? (o.parts === 1 ? 'pay in full' : `${o.parts} parts`) :
+               o.target === 'Monthly' ? `${nMon}-month plan` : 'deposit + instalments';
+      r.label = r.title + ' · ' + r.mode;
+      r.levelText = `Level ${r.level} — ` + (o.step === 0 ? 'same level as now' : o.stepText.toLowerCase());
+      r.short = o.target === 'Upfront'
+        ? (o.parts === 1 ? `Pay the rest today in one payment at ${pct(r.disc)} off list.`
+                         : `${pct(r.disc)} off list, paid in ${o.parts} parts: one today, ${o.parts === 2 ? 'the second' : 'the other ' + (o.parts-1)} within 7 days.`)
+        : o.target === 'Monthly' ? `Switch to the ${nMon}-month plan at ${pct(r.disc)} off list. Nothing extra today.`
+        : `${pct(DEP)} deposit today, the rest monthly, at ${pct(r.disc)} off list.`;
+      const t = twin[o.id];
+      if (t) {
+        const tw = rows[t-1];
+        if (tw.allowed && !shown.has(t)) r.splitNote = 'Can also be split into 2 or 3 parts: one today, the rest within 7 days.';
+      }
+      r.cadence = o.target === 'Upfront' ? 'within 7 days' : 'monthly';
+      r.lastDiff = r.X > 1 && Math.abs(r.Z - r.Y) > 10;
+    });
+    return {planOK:true, T, p, cur, curDisc, inst, paidAuto, paid, rows, top, nMon, nDep};
+  }
+  return {quote, planTable};
+})();
+if (typeof module !== 'undefined') module.exports = CALC;
+</script>
+
+<script>
+/* ---------- UI ---------- */
+(function(){
+  const D = JSON.parse(document.getElementById('data').textContent);
+  const FLAG = {Mexico:'🇲🇽', Chile:'🇨🇱', Ecuador:'🇪🇨', Peru:'🇵🇪', Colombia:'🇨🇴', Argentina:'🇦🇷'};
+  const LISTS = [['Old','Before 06.10.26'],['New','From 06.10.26']];
+  const PLANS = ['Monthly','Extended','Deposit'];
+  const $ = id => document.getElementById(id);
+  const fmt = n => '$' + Math.round(n).toLocaleString('en-US');
+  const pct = x => Math.round(x*100) + '%';
+
+  const state = {country:'Mexico', list:'Old', course:'Data Analyst', plan:'Extended', level:2, pm:1, paid:null};
+  // restore from the link (#country=…&…) so a quote can be shared with a lead
+  try {
+    const h = new URLSearchParams(location.hash.slice(1));
+    for (const k of ['country','list','course','plan']) if (h.get(k)) state[k] = h.get(k);
+    for (const k of ['level','pm']) if (h.get(k)) state[k] = +h.get(k);
+    if (h.get('paid')) state.paid = +h.get('paid');
+  } catch(e) {}
+  if (!D.countries.includes(state.country)) state.country = 'Mexico';
+  if (!D.courses.includes(state.course)) state.course = 'Data Analyst';
+
+  function seg(el, name, items, value, onPick){
+    el.innerHTML = '';
+    items.forEach(([v, html, disabled], i) => {
+      const id = `${name}-${i}`;
+      const inp = document.createElement('input');
+      inp.type = 'radio'; inp.name = name; inp.id = id; inp.value = v;
+      inp.checked = String(v) === String(value); inp.disabled = !!disabled;
+      inp.addEventListener('change', () => onPick(v));
+      const lab = document.createElement('label'); lab.htmlFor = id; lab.innerHTML = html;
+      el.append(inp, lab);
+    });
+  }
+  function set(k, v){ state[k] = v; if (k !== 'paid') { if (['country','list','course','plan','pm'].includes(k)) { state.paid = null; $('paid').value = ''; } } render(); }
+
+  $('course').innerHTML = D.courses.map(c => `<option>${c}</option>`).join('');
+  $('course').addEventListener('change', e => set('course', e.target.value));
+  $('paid').addEventListener('input', e => {
+    const v = e.target.value.replace(/[^0-9.]/g,'');
+    state.paid = v === '' ? null : +v; render(false);
+  });
+
+  function render(rebuildInputs = true){
+    if (!(state.country === 'Mexico') && state.plan !== 'Monthly') state.plan = 'Monthly';
+    const q = CALC.quote(D, state);
+    const cur = q.p ? q.p.cur : '';
+
+    if (rebuildInputs) {
+      seg($('country'), 'country', D.countries.map(c => [c, `<span aria-hidden="true">${FLAG[c]}</span>${c}`]), state.country, v => set('country', v));
+      seg($('list'), 'list', LISTS.map(([v,l]) => [v, l]), state.list, v => set('list', v));
+      $('course').value = state.course;
+      seg($('plan'), 'plan', PLANS.map(p => [p, p, state.country !== 'Mexico' && p !== 'Monthly']), state.plan, v => set('plan', v));
+      const T = q.T || CALC.planTable(D.prices[`${state.country}|${state.list}|${state.course}`]);
+      const pt = T[state.plan];
+      seg($('level'), 'level', [1,2,3].map(l => [l, `${l} <small>−${pct(1 - pt.l[l]/pt.full)}</small>`]), state.level, v => set('level', +v));
+      seg($('pm'), 'pm', [1,2,3].map(n => [n, String(n)]), state.pm, v => set('pm', +v));
+    }
+    const ph = $('plan-hint');
+    ph.hidden = state.country === 'Mexico';
+    ph.textContent = `${state.country} sells Monthly and Upfront only — no Extended or Deposit.`;
+
+    if (q.error) { $('out').innerHTML = `<div class="none"><h3>${q.error}</h3><p>Pick Monthly.</p></div>`; return; }
+
+    $('paid').placeholder = `auto: ${fmt(q.paidAuto)}`;
+    $('paid-hint').textContent = state.paid == null
+      ? `Using ${state.pm} × ${fmt(q.inst)}${state.plan === 'Deposit' ? ' (first one is the deposit)' : ''}. Type a total only if it differs.`
+      : `Using ${fmt(q.paid)} instead of the auto ${fmt(q.paidAuto)}.`;
+
+    $('now').innerHTML = `<div class="k">Pays now</div>
+      <div class="v">${fmt(q.cur)} total</div>
+      <div class="d">${q.curDisc > 0 ? pct(q.curDisc) + ' off list' : 'List price'}, ${fmt(q.inst)} a month${state.plan === 'Deposit' ? ' after the deposit' : ''}</div>`;
+
+    // discount level table
+    const rowsT = ['Upfront','Monthly','Extended','Deposit'].filter(k => q.T[k]);
+    $('levels').innerHTML = `<thead><tr><th>Plan</th><th>Level 1</th><th>Level 2</th><th>Level 3</th></tr></thead><tbody>` +
+      rowsT.map(k => `<tr><td>${k}</td>` + [1,2,3].map(l => {
+        const t = q.T[k], isCur = k === state.plan && l === state.level;
+        return `<td class="${isCur ? 'cur' : ''}">${fmt(t.l[l])}<span class="p">−${pct(1 - t.l[l]/t.full)}</span></td>`;
+      }).join('') + `</tr>`).join('') + `</tbody>`;
+
+    $('cur-tag').textContent = `Amounts in ${cur} · ${state.list === 'Old' ? 'prices before 06.10.26' : 'prices from 06.10.26'}`;
+
+    // offers
+    const when = ['Start here','If 1 is declined','Last try'];
+    if (!q.top.length) {
+      $('out').innerHTML = `<div class="none"><h3>No upgrade for this student</h3><p>Keep the current plan. Nothing in the matrix fits ${state.plan} after ${state.pm} payment${state.pm>1?'s':''} at level ${state.level}.</p></div>`;
+    } else {
+      const cards = q.top.map((r, i) => {
+        let then;
+        if (r.X === 0) then = 'Nothing more to pay';
+        else if (!r.lastDiff) then = `then <b>${r.X} × ${fmt(r.Y)}</b> ${r.cadence}`;
+        else then = `then <b>${r.X - 1} × ${fmt(r.Y)}</b> + last <b>${fmt(r.Z)}</b> ${r.cadence}`;
+        return `<article class="card ${i===0?'first':''}">
+          <span class="rank"><b>${i+1}</b>${when[i]}</span>
+          <h3>${r.title}<span class="mode">${r.mode}</span></h3>
+          <div class="lvl">${r.levelText}</div>
+          <p class="short">${r.short}${r.splitNote ? `<span class="split">${r.splitNote}</span>` : ''}</p>
+          ${r.o.approval === 'Yes' ? '<div class="tags"><span class="tag">Needs lead approval</span></div>' : ''}
+          <div class="pay">
+            <div class="k">Pay now</div>
+            <div class="big">${fmt(r.U)}</div>
+            <div class="then">${then}</div>
+            ${r.X > 0 ? `<div class="cmp">Pays ${fmt(q.inst)} a month now</div>` : ''}
+          </div>
+          <div class="tot">
+            <span>New total</span><span class="r"><b>${fmt(r.K)}</b></span>
+            <span>Current total</span><span class="r was">${fmt(q.cur)}</span>
+            <span>Student saves</span><span class="r save">${fmt(r.N)} · ${pct(r.O)}</span>
+          </div>
+          <div class="copy"><button type="button" data-i="${i}">Copy quote</button></div>
+        </article>`;
+      });
+      for (let i = q.top.length; i < 3; i++) cards.push(`<div class="card empty">No offer ${i+1} for this student</div>`);
+      $('out').innerHTML = `<div class="cards">${cards.join('')}</div>`;
+      $('out').querySelectorAll('.copy button').forEach(b => b.addEventListener('click', () => copyQuote(q.top[+b.dataset.i], q, cur)));
+    }
+    $('foot').textContent = 'Offer order comes from the matrix per country. Amounts are rounded to whole units; the last payment absorbs the difference.';
+
+    // keep the link in sync so it can be shared
+    const h = new URLSearchParams({country:state.country, list:state.list, course:state.course, plan:state.plan, level:state.level, pm:state.pm});
+    if (state.paid != null) h.set('paid', state.paid);
+    history.replaceState(null, '', '#' + h.toString());
+  }
+
+  function copyQuote(r, q, cur){
+    const m = v => `${fmt(v)} ${cur}`;
+    const lines = [
+      'Student email: ',
+      `Country: ${state.country}`,
+      `Bought on: ${state.list === 'Old' ? 'Before 06.10.26' : 'From 06.10.26'}`,
+      `Course: ${state.course}`,
+      `Current plan: ${state.plan}`,
+      `Current discount level: ${state.level} (${q.curDisc > 0 ? '−' + pct(q.curDisc) : 'list price'})`,
+      `Payments already made: ${state.pm}`,
+      `Total already paid: ${m(q.paid)}`,
+      `Upsell offer: ${r.label}`,
+      `New student price: ${m(r.K)}`,
+      `Old student price: ${m(q.cur)}`,
+      `Savings: ${m(r.N)} (${pct(r.O)})`,
+      `Pay now: ${m(r.U)}`,
+    ];
+    const txt = lines.join('\n');
+    const done = () => toast('Quote copied');
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(done, () => fallback(txt, done));
+    else fallback(txt, done);
+  }
+  function fallback(txt, done){
+    const ta = document.createElement('textarea'); ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.append(ta); ta.select(); try { document.execCommand('copy'); done(); } catch(e) {} ta.remove();
+  }
+  let tt; function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 1600); }
+
+  if (state.paid != null) $('paid').value = state.paid;
+  render();
+})();
+</script>
+</body>
+</html>
